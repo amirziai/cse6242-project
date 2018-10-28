@@ -287,12 +287,13 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
 
     for p in range(k):
         # fo2.write("<node FOLDED=\"true\" TEXT=\"" + terms[0, keyterms[p][0]] + "-" + terms[0, keyterms[p][1]] + "\">\n")
-        tempStr = '['
-        comma = ''
+        # tempStr = '['
+        # comma = ''
         # fo2.write("<richcontent TYPE=\"NOTE\">\n")
         # fo2.write("<html>\n<head></head>\n<body>\n<p>")
         # fo2.write("Cluster size: " + str(len(clusters[p])))
         # fo2.write("</p>\n</body>\n</html>\n</richcontent>\n")
+        tmp = []
 
         for j in range(len(clusters[p])):
             textFile = docs[0, clusters[p][j]]
@@ -300,7 +301,8 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
         #                                                                             2:len(userDirectory)] + textFile[
         #                                                                                                     0:textFile.rindex(
         #                                                                                                         '.')] + '.pdf' + "\" TEXT=\"" + textFile + "\">\n")
-        tempStr += comma + '\"' + str(docs[0, clusters[p][j]]) + '\"'
+            # tempStr += comma + '\"' + str(docs[0, clusters[p][j]]) + '\"'
+            tmp.append(docs[0, clusters[p][j]])
         # fo.write(comma + docs[0, clusters[p][j]])
         # comma = ','
         # try:
@@ -319,9 +321,10 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
 
         # fo2.write("</node>\n")
         # fo.write("\n")
-        tempStr += ']'
-        clusterDocs.append(tempStr)
+        # tempStr += ']'
+        clusterDocs.append(tmp)
         # fo2.write("</node>")
 
     clusterKeyterms = [ast.literal_eval(x) for x in clusterKeyterms]
+    # clusterDocs = [ast.literal_eval(x) for x in clusterDocs]
     return clusterDocs, clusterKeyterms, keyterms, silhouette_avg
