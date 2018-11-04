@@ -144,7 +144,6 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
                     if (numpy.where(terms == userFeedbackTerm[i][j])[1].size > 0):
                         userU[i, numpy.where(terms == userFeedbackTerm[i][j])[1][0]] = max(1 - j * step, 0.5)
 
-
     docs = numpy.arange(1, N + 1).reshape((1, N))
 
     Vars = numpy.var(data, axis=0).transpose()
@@ -297,10 +296,10 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
 
         for j in range(len(clusters[p])):
             textFile = docs[0, clusters[p][j]]
-        # fo2.write("<node LINK=\"" + "http://ares.research.cs.dal.ca/~sherkat/IC2/" + userDirectory[
-        #                                                                             2:len(userDirectory)] + textFile[
-        #                                                                                                     0:textFile.rindex(
-        #                                                                                                         '.')] + '.pdf' + "\" TEXT=\"" + textFile + "\">\n")
+            # fo2.write("<node LINK=\"" + "http://ares.research.cs.dal.ca/~sherkat/IC2/" + userDirectory[
+            #                                                                             2:len(userDirectory)] + textFile[
+            #                                                                                                     0:textFile.rindex(
+            #                                                                                                         '.')] + '.pdf' + "\" TEXT=\"" + textFile + "\">\n")
             # tempStr += comma + '\"' + str(docs[0, clusters[p][j]]) + '\"'
             tmp.append(docs[0, clusters[p][j]])
         # fo.write(comma + docs[0, clusters[p][j]])
