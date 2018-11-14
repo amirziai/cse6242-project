@@ -29,12 +29,36 @@
 
 <div class="container">
     <div class="row">
-        <div class="col-md-12" style="text-align: center">
+        <div class="col-sm-3">
+            <form>
+                <h2>Options</h2>
+                <br/>
+                <label for="dataset-select">Dataset</label>
+                <select id="dataset-select">
+                    <option>BBC</option>
+                    <option>20 News Groups</option>
+                </select>
+                <br/>
+                <label for="algorithm-select">Algorithm</label>
+                <select id="algorithm-select">
+                    <option>iKMeans</option>
+                    <option>Birch</option>
+                    <option>means</option>
+                    <option>DBSCAN</option>
+                    <option>spectral</option>
+                    <option>affinity</option>
+                </select>
+                <label for="numOfClusters">Number of Clusters</label>
+                <input class="form-control" id="numOfClusters" placeholder="5">
+
+                <button type="submit" class="btn btn-primary" onclick="submit_options()">Submit</button>
+            </form>
+        </div>
+        <div class="col-sm-8" style="text-align: center">
             <h1>Interactive Document Clustering</h1>
-            <span style="font-size: 18pt; font-weight: bold">Dataset: BBC</span> <a href="#" data-toggle="modal"
-                                                                                    data-target="#uploadModal">Upload
-            your own</a>
-            <br>
+            <div id="container" style="min-width: 310px; height: 500px; width: 100%; margin: 0 auto">
+                <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+            </div>
             <br>
             <span style="font-size: 18pt; font-weight: bold">Cluster key terms</span> <a href="#" data-toggle="modal"
                                                                                          data-target="#editModal">Edit
@@ -46,9 +70,6 @@
                 </thead>
                 <tbody></tbody>
             </table>
-            <div id="container" style="min-width: 310px; height: 500px; width: 100%; margin: 0 auto">
-                <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
-            </div>
         </div>
     </div>
 
@@ -101,6 +122,30 @@
 </html>
 
 <script type="text/javascript">
+
+    function submit_options() {
+        $("#container").html('<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>');
+        console.log($("#algorithm-select").val());
+        console.log($("#dataset-select").val());
+        console.log($("#numOfClusters").val());
+
+        $.ajax({
+            url: "/load",
+            type: "POST",
+            dataType: "json",
+            data: JSON.stringify({
+                algorithm: $("#algorithm-select").val(),
+                dataset: $("#dataset-select").val(),
+                numOfClusters: $("#numOfClusters").val()
+            }),
+            contentType: 'application/json;charset=UTF-8',
+            success: function (data) {
+                render(data);
+                console.log(data);
+            }
+        });
+    }
+
     function update() {
         $("#cluster_terms tbody").html('');
         $("#container").html('<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>');
@@ -188,7 +233,6 @@
             }
         }
     }
-
 
     $.ajax({
         url: "/start",
