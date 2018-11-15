@@ -30,29 +30,27 @@
 <div class="container">
     <div class="row">
         <div class="col-sm-3">
-            <form>
-                <h2>Options</h2>
-                <br/>
-                <label for="dataset-select">Dataset</label>
-                <select id="dataset-select">
-                    <option>BBC</option>
-                    <option>20 News Groups</option>
-                </select>
-                <br/>
-                <label for="algorithm-select">Algorithm</label>
-                <select id="algorithm-select">
-                    <option>iKMeans</option>
-                    <option>Birch</option>
-                    <option>means</option>
-                    <option>DBSCAN</option>
-                    <option>spectral</option>
-                    <option>affinity</option>
-                </select>
-                <label for="numOfClusters">Number of Clusters</label>
-                <input class="form-control" id="numOfClusters" placeholder="5">
+            <h2>Options</h2>
+            <br/>
+            <label for="dataset-select">Dataset</label>
+            <select id="dataset-select">
+                <option>BBC</option>
+                <option>20 News Groups</option>
+            </select>
+            <br/>
+            <label for="algorithm-select">Algorithm</label>
+            <select id="algorithm-select">
+                <option>iKMeans</option>
+                <option>Birch</option>
+                <option>means</option>
+                <option>DBSCAN</option>
+                <option>spectral</option>
+                <option>affinity</option>
+            </select>
+            <label for="numOfClusters">Number of Clusters</label>
+            <input class="form-control" id="numOfClusters" placeholder="5">
 
-                <button type="submit" class="btn btn-primary" onclick="submit_options()">Submit</button>
-            </form>
+            <button type="submit" class="btn btn-primary" onclick="submit_options()">Submit</button>
         </div>
         <div class="col-sm-8" style="text-align: center">
             <h1>Interactive Document Clustering</h1>
@@ -225,6 +223,7 @@
     function render(data) {
         scatter(data['pca']);
         const keyTerms = data['cluster_key_terms'];
+        $("#cluster_terms").find("tr:gt(0)").remove();
         for (const clusterIndex in keyTerms) {
             if (keyTerms.hasOwnProperty(clusterIndex)) {
                 const terms = keyTerms[clusterIndex].slice(0, 10).join(' ');

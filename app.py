@@ -4,6 +4,7 @@ from flask import Flask, render_template, jsonify, request
 from sklearn.decomposition import PCA, IncrementalPCA
 from sklearn.preprocessing import StandardScaler
 from sklearn import cluster
+from sklearn.datasets import fetch_20newsgroups
 import datasets
 import interactive
 import preprocessing
@@ -16,6 +17,7 @@ k = 6  # start with assuming there are this many clusters
 # options = (1.1, 25, 0.01, 0)
 max_features = 1000
 docs_limit = 500
+n_samples = 2000
 
 # cosmetic
 color_alpha = 0.5
@@ -74,14 +76,16 @@ def get_pca_for_highcharts(clusters_docs, pca):
 
 def set_data_set(dataset_name):
     if dataset_name == "BBC":
-        pass
+        corpus = datasets.get_bbc()
     elif dataset_name == "20 News Groups":
         #TODO replace with code to load news groups
-        corpus = datasets.get_bbc()
-        pre_processor = preprocessing.NLPProcessor(max_features=max_features)
-        bbc_vectorized_features_bound = pre_processor.fit_transform(corpus)
-        data = bbc_vectorized_features_bound[:docs_limit].todense()
-        terms = np.array(pre_processor.vec.get_feature_names()).reshape((1, max_features))
+        dataset = fetch_20newsgroups(shuffle=True, remove=('headers', 'footers', 'quotes'))
+        corpus = dataset.data
+
+    vectorized_features_bound = pre_processor.fit_transform(corpus)
+    global data, terms
+    data = vectorized_features_bound[:docs_limit].todense()
+    terms = np.array(pre_processor.vec.get_feature_names()).reshape((1, max_features))
 
 
 
@@ -108,14 +112,17 @@ def load():
     user_input_json = request.json
     algorithms = ["iKMeans", "DBSCAN", "birch", "means", "spectral", "affinity"]
     dataset_names = ["BBC", "20 News Groups"]
+    
+    current_dataset = user_input_json["dataset"]
+    if current_dataset == None:
+        current_dataset = dataset_names[0]
+    set_data_set(current_dataset)
+    
     current_algorithm = user_input_json["algorithm"]
     if current_algorithm == None:
         current_algorithm = algorithms[0]
     if current_algorithm == "iKMeans":
         return get_clusters(k, [])
-    current_dataset = user_input_json["dataset"]
-    if current_dataset == None:
-        current_dataset = dataset_names[0]
 
     clusters = user_input_json["numOfClusters"]
     if clusters == "" or clusters == None:
