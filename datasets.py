@@ -5,7 +5,7 @@ from typing import List
 DATASETS_PATH = 'resources/datasets/'
 
 
-csv.field_size_limit(sys.maxsize)
+csv.field_size_limit(2**16)
 
 def get_bbc() -> List[str]:
     return [line[1] for i, line in enumerate(csv.reader(open(f"{DATASETS_PATH}bbc-text.csv"), delimiter=',')) if i > 0]
