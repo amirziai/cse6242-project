@@ -1,5 +1,4 @@
 import csv
-import sys
 from typing import List
 
 DATASETS_PATH = 'resources/datasets/'
