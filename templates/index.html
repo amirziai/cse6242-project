@@ -228,7 +228,7 @@
             if (keyTerms.hasOwnProperty(clusterIndex)) {
                 const terms = keyTerms[clusterIndex].slice(0, 10).join(' ');
                 $("#cluster_terms tbody").append(`<tr><td>${parseInt(clusterIndex) + 1}</td><td>${terms}</td></tr>`);
-                $("#terms").append(terms + '\n');
+                $("#terms").append(terms + '\n\n');
             }
         }
     }
