@@ -32,13 +32,9 @@
             /*Hides pop-up when there is no "active" class*/
             visibility: hidden;
             position: absolute;
-            background: #F8F8F8;
-            border: 1px solid #808080;
-            border-radius: 25px;
-            width: 75;
             height: 50%;
-            top: 13%;
-            left: 25%;
+            top: 27%;
+            left: -20%;
             z-index: 10;
         }
 
@@ -62,14 +58,8 @@
 <body>
 
 <div class="container">
-    <!--Creates the popup body-->
-    <div class="popup-overlay">
-        <!--Creates the popup content-->
-        <div class="popup-content">
-        </div>
-    </div>
     <div class="row">
-        <div class="col-sm-3">
+        <div class="col-md-4">
             <h5>Options</h5>
             <label for="dataset-select">Dataset</label>
             <select id="dataset-select">
@@ -89,8 +79,14 @@
             <input class="form-control" id="numOfClusters" placeholder="5">
             <br>
             <button type="submit" class="btn btn-primary" onclick="submit_options()">Cluster</button>
+            <!--Creates the popup body-->
+            <div class="popup-overlay col-md-4">
+                <!--Creates the popup content-->
+                <div class="popup-content">
+                </div>
+            </div>
         </div>
-        <div class="col-sm-8" style="text-align: center">
+        <div class="col-md-8" style="text-align: center">
             <h1>Interactive Document Clustering</h1>
             <p>Click legend labels to show and hide clusters</p>
             <div id="container" style="min-width: 310px; height: 500px; width: 100%; margin: 0 auto">
@@ -160,6 +156,8 @@
 
 <script type="text/javascript">
 
+    svg_width = 350;
+    svg_height = 700;
     function disableNumberClustersTextbox(algo) {
         if (algo === "Affinity Propagation") {
             $("#numOfClusters").attr("disabled", "disabled");
@@ -296,13 +294,13 @@
                 var colors = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac", "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262"];
 
                 var layout = d3.layout.cloud()
-                    .size([850, 350])
+                    .size([svg_width, svg_height])
                     .words(keyTerms[cluster_num - 1].map(function (d, i) {
-                        return {text: d, size: 10 + Math.random() * 90, color: colors[i]};
+                        return {text: d, size: 10 + Math.random() * 60, color: colors[i]};
                     }))
                     .padding(5)
                     .rotate(function () {
-                        return ~~(Math.random() * 2) * 90;
+                        return ~~(Math.random() * 2) * 45;
                     })
                     .font("Impact")
                     .fontSize(function (d) {
@@ -322,12 +320,11 @@
     }
 
     function draw(words) {
-
         d3.select(".popup-content").append("svg")
-            .attr("width", 850)
-            .attr("height", 350)
+            .attr("width", svg_width)
+            .attr("height", svg_height)
             .append("g")
-            .attr("transform", "translate(" + 850 / 2 + "," + 350 / 2 + ")")
+            .attr("transform", "translate(" + svg_width / 2 + "," + svg_height / 2 + ")")
             .selectAll("text")
             .data(words)
             .enter().append("text")
