@@ -1,10 +1,16 @@
-from collections import defaultdict
+import re
+from collections import defaultdict, Counter
+from functools import reduce
+from operator import add
+
 import numpy as np
 from flask import Flask, render_template, jsonify, request
-from sklearn.decomposition import PCA, IncrementalPCA
-from sklearn.preprocessing import StandardScaler
 from sklearn import cluster
 from sklearn.datasets import fetch_20newsgroups
+from sklearn.decomposition import PCA, IncrementalPCA
+from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
+from sklearn.preprocessing import StandardScaler
+
 import datasets
 import interactive
 import preprocessing
@@ -13,7 +19,7 @@ app = Flask(__name__)
 
 # configs
 # algo
-k = 6  # start with assuming there are this many clusters
+k = 5  # start with assuming there are this many clusters
 # options = (1.1, 25, 0.01, 0)
 max_features = 1000
 docs_limit = 500
@@ -45,6 +51,11 @@ terms = np.array(pre_processor.vec.get_feature_names()).reshape((1, max_features
 # cosmetic
 colors = [x.format(alpha=color_alpha) for x in colors_base]
 
+# text processing
+regex = re.compile('[^a-zA-Z\s]')
+stop_words_ad_hoc = {'said'}
+stop_words = set(ENGLISH_STOP_WORDS).union(stop_words_ad_hoc)
+
 
 # def get_assignments(cluster_docs):
 #     assignments = np.zeros(docs)
@@ -68,40 +79,42 @@ def get_pca_for_highcharts(clusters_docs, pca):
     return [
         {
             'name': f'Cluster {i+1}',
-            'color': colors[i],
+            'color': colors[i % len(colors)],
             'data': cluster_data[i],
         }
-        for i in range(k)
+        for i in range(len(cluster_data))
     ]
 
+
 def set_data_set(dataset_name):
+    corpus_local = None
     if dataset_name == "BBC":
-        corpus = datasets.get_bbc()
+        corpus_local = datasets.get_bbc()
     elif dataset_name == "20 News Groups":
         dataset = fetch_20newsgroups(shuffle=True, remove=('headers', 'footers', 'quotes'))
         corpus = dataset.data
     elif dataset_name == "All the news":
         corpus = datasets.get_all_the_news()
 
-    vectorized_features_bound = pre_processor.fit_transform(corpus)
-    global data, terms
+    vectorized_features_bound = pre_processor.fit_transform(corpus_local)
+    global data, terms, corpus
     data = vectorized_features_bound[:docs_limit].todense()
     terms = np.array(pre_processor.vec.get_feature_names()).reshape((1, max_features))
-
+    corpus = corpus_local
 
 
 def get_algorithm(algorithm_name, clusters):
-    if algorithm_name == "dbscan":
-        algorithm = cluster.DBSCAN(eps=.2)
-    elif algorithm_name == "birch":
-        algorithm = cluster.Birch(n_clusters=clusters)
-    elif algorithm_name == "means":
-        algorithm = cluster.MiniBatchKMeans(n_clusters=clusters)
-    elif algorithm_name == "spectral":
-        algorithm = cluster.SpectralClustering(n_clusters=clusters, eigen_solver='arpack', affinity="nearest_neighbors")
+    # if algorithm_name == "DBSCAN":
+    #    return cluster.DBSCAN()
+    if algorithm_name == "Birch":
+        return cluster.Birch(n_clusters=clusters)
+    elif algorithm_name == "Spectral Clustering":
+        return cluster.SpectralClustering(n_clusters=clusters)
+    elif algorithm_name == 'Affinity Propagation':
+        return cluster.AffinityPropagation()
     else:
-        algorithm = cluster.AffinityPropagation(damping=.9, preference=-200)
-    return algorithm
+        raise NotImplementedError(f'algorithm: {algorithm_name} not implemented')
+
 
 @app.route('/')
 def index():
@@ -118,12 +131,6 @@ def load():
     if current_dataset == None:
         current_dataset = dataset_names[0]
     set_data_set(current_dataset)
-    
-    current_algorithm = user_input_json["algorithm"]
-    if current_algorithm == None:
-        current_algorithm = algorithms[0]
-    if current_algorithm == "iKMeans":
-        return get_clusters(k, [])
 
     clusters = user_input_json["numOfClusters"]
     if clusters == "" or clusters == None:
@@ -131,28 +138,58 @@ def load():
     else:
         clusters = int(clusters)
 
+    current_algorithm = user_input_json["algorithm"]
+    if current_algorithm is None:
+        current_algorithm = algorithms[0]
+    if current_algorithm == "iKMeans":
+        return get_clusters(clusters, [])
+
     pca = IncrementalPCA(n_components=2).fit_transform(data)
     pca = StandardScaler().fit_transform(pca)
     # key_terms = [list(x) for x in key_terms]
 
     algorithm = get_algorithm(current_algorithm, clusters)
-    algorithm.fit(pca)
+    algorithm.fit(data)
     if hasattr(algorithm, 'labels_'):
         y_pred = algorithm.labels_.astype(np.int)
     else:
-        y_pred = algorithm.predict(pca)
-    cluster_key_terms = None
+        y_pred = algorithm.predict(data)
+    # print(f'y_pred size: {len(y_pred)}')
     silhouette_avg = None
-    clusters_dict = dict()
-    for i in range(len(y_pred)):
-        cluster_id = int(y_pred[i])
-        if not cluster_id in clusters_dict.keys():
-            clusters_dict[cluster_id] = list()
-        clusters_dict[cluster_id].append(i)
-    clusters_docs = [None]*len(clusters_dict.keys())
-    for key in clusters_dict.keys():
-        clusters_docs[key] = clusters_dict[key]
+    # clusters_dict = dict()
+
+    clusters_dict = defaultdict(list)
+    for i, label in enumerate(y_pred):
+        clusters_dict[label].append(i + 1)
+    clusters_docs = [clusters_dict[i] for i in range(len(clusters_dict))]
+
+    # print(f'# of docs in each cluster: {list(map(len, clusters_docs))}')
+    # print(f'sum of docs in each cluster: {sum(map(len, clusters_docs))}')
+    # print(f'Cluster doc: {len(clusters_docs)}')
+    #
+    # print(clusters_docs)
+    cluster_key_terms = [
+        [x[0] for x in reduce(add, (Counter((w for w in regex.sub('', corpus[i - 1]).split()
+                                             if w.lower() not in stop_words and len(w) > 3))
+                                    for i in c)).most_common(50)]
+        for c in clusters_docs
+    ]
+
+    # clusters_docs = [[] for _ in range(10)]
+    # a[0].append(1)
+    # a
+    #
+    # for i in range(len(y_pred)):
+    #     cluster_id = int(y_pred[i])
+    #     if not cluster_id in clusters_dict.keys():
+    #         clusters_dict[cluster_id] = list()
+    #     clusters_dict[cluster_id].append(i + 1)
+    # clusters_docs = [None] * len(clusters_dict.keys())
+    # for key in clusters_dict.keys():
+    #     clusters_docs[key] = clusters_dict[key]
+
     return send_data(cluster_key_terms, silhouette_avg, clusters_docs, pca)
+
 
 @app.route('/update', methods=['POST'])
 def update():
@@ -190,6 +227,7 @@ def get_clusters(no_clusters, user_input):
 @app.route('/start')
 def start():
     return get_clusters(k, [])
+
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
