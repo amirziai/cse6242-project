@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<link
+    href="http://cdn.pydata.org/bokeh/release/bokeh-1.0.0.min.css"
+    rel="stylesheet" type="text/css">
+<link
+    href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-1.0.0.min.css"
+    rel="stylesheet" type="text/css">
+
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-1.0.0.min.js"></script>
+<script src="https://cdn.pydata.org/bokeh/release/bokeh-widgets-1.0.0.min.js"></script>
+
+</head>
+<body>
+<H1>Clustering</H1>
+
+<div>
+<form action="/">
+	<table>
+		<tr>
+			<td><b>Dataset</b></td>
+			<td>
+				<select name="dataset">
+				{% for dataset in datasets %}
+					{% if dataset == current_dataset %}
+						<option selected value="{{ dataset }}">{{ dataset }}</option>
+					{% else %}
+						<option value="{{ dataset }}">{{ dataset }}</option>
+					{% endif %}
+				{% endfor %}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td><b>Algorithm</b></td>
+			<td>
+				<select name="algorithm">
+					{% for algorithm in algorithms %}
+						{% if algorithm == current_algorithm %}
+							<option selected value="{{ algorithm }}">{{ algorithm }}</option>
+						{% else %}
+							<option value="{{ algorithm }}">{{ algorithm }}</option>
+						{% endif %}
+					{% endfor %}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td><b>Number of Clusters:</b></td
+			><td><input type="text" size=6 name="clusters" value="{{ clusters }}"></td>
+		</tr>
+		<tr>
+			<td></td>
+			<td><input type="submit"></td>
+		</tr>
+	</table>
+
+</form>
+</div>
+
+{{ script|safe }}
+{{ div|safe }}
+
+
+</body>
+</html>
