@@ -28,33 +28,34 @@
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
 
     <style>
-        .popup-overlay{
-          /*Hides pop-up when there is no "active" class*/
-          visibility:hidden;
-          position:absolute;
-          background: #F8F8F8;
-          border: 1px solid #808080;
-          border-radius: 25px;
-          width: 75;
-          height: 50%;
-          top: 13%;
-          left:25%; 
-          z-index: 10;
+        .popup-overlay {
+            /*Hides pop-up when there is no "active" class*/
+            visibility: hidden;
+            position: absolute;
+            background: #F8F8F8;
+            border: 1px solid #808080;
+            border-radius: 25px;
+            width: 75;
+            height: 50%;
+            top: 13%;
+            left: 25%;
+            z-index: 10;
         }
-        .popup-overlay.active{
-          /*displays pop-up when "active" class is present*/
-          visibility:visible;
-          text-align:center;
+
+        .popup-overlay.active {
+            /*displays pop-up when "active" class is present*/
+            visibility: visible;
+            text-align: center;
         }
 
         .popup-content {
-          /*Hides pop-up content when there is no "active" class */
-         visibility:hidden;
+            /*Hides pop-up content when there is no "active" class */
+            visibility: hidden;
         }
 
         .popup-content.active {
-          /*Shows pop-up content when "active" class is present */
-          visibility:visible;
+            /*Shows pop-up content when "active" class is present */
+            visibility: visible;
         }
     </style>
 </head>
@@ -63,33 +64,31 @@
 <div class="container">
     <!--Creates the popup body-->
     <div class="popup-overlay">
-      <!--Creates the popup content-->
-       <div class="popup-content">
-       </div>
+        <!--Creates the popup content-->
+        <div class="popup-content">
+        </div>
     </div>
     <div class="row">
         <div class="col-sm-3">
-            <h2>Options</h2>
-            <br/>
+            <h5>Options</h5>
             <label for="dataset-select">Dataset</label>
             <select id="dataset-select">
                 <option>BBC</option>
                 <option>20 News Groups</option>
+                <option>All the news</option>
             </select>
             <br/>
             <label for="algorithm-select">Algorithm</label>
-            <select id="algorithm-select">
-                <option>iKMeans</option>
+            <select id="algorithm-select" onchange="disableNumberClustersTextbox(value);">
+                <option value="iKMeans">iKMeans</option>
                 <option>Birch</option>
-                <option>means</option>
-                <option>DBSCAN</option>
-                <option>spectral</option>
-                <option>affinity</option>
+                <option>Spectral Clustering</option>
+                <option>Affinity Propagation</option>
             </select>
             <label for="numOfClusters">Number of Clusters</label>
             <input class="form-control" id="numOfClusters" placeholder="5">
-
-            <button type="submit" class="btn btn-primary" onclick="submit_options()">Submit</button>
+            <br>
+            <button type="submit" class="btn btn-primary" onclick="submit_options()">Cluster</button>
         </div>
         <div class="col-sm-8" style="text-align: center">
             <h1>Interactive Document Clustering</h1>
@@ -160,7 +159,17 @@
 
 <script type="text/javascript">
 
+    function disableNumberClustersTextbox(algo) {
+        if (algo === "Affinity Propagation") {
+            $("#numOfClusters").attr("disabled", "disabled");
+        } else {
+            $("#numOfClusters").removeAttr("disabled");
+        }
+    }
+
     function submit_options() {
+        $("#cluster_terms tbody").html('');
+        $("#terms").val('');
         $("#container").html('<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>');
         console.log($("#algorithm-select").val());
         console.log($("#dataset-select").val());
@@ -179,20 +188,26 @@
             success: function (data) {
                 render(data);
                 console.log(data);
+            },
+            error: function (data) {
+                alert("It looks like that dataset hasn't been downloaded yet, or there was a problem loading it. Please refer to the README for further instructions.");
             }
         });
     }
 
     function update() {
+        $('#algorithm-select').val("iKMeans").change();
         $("#cluster_terms tbody").html('');
         $("#container").html('<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>');
-        console.log($("#terms").val());
+        const textArea = $("#terms").val();
+        $("#terms").val('');
+        console.log(textArea);
 
         $.ajax({
             url: "/update",
             type: "POST",
             dataType: "json",
-            data: JSON.stringify({terms: $("#terms").val()}),
+            data: JSON.stringify({terms: textArea}),
             contentType: 'application/json;charset=UTF-8',
             success: function (data) {
                 render(data);
@@ -255,66 +270,81 @@
         scatter(data['pca']);
         const keyTerms = data['cluster_key_terms'];
         $("#cluster_terms").find("tr:gt(0)").remove();
+        let clusterCounter = 0;
         for (const clusterIndex in keyTerms) {
             if (keyTerms.hasOwnProperty(clusterIndex)) {
                 const terms = keyTerms[clusterIndex].slice(0, 10).join(' ');
                 $("#cluster_terms tbody").append(`<tr><td>${parseInt(clusterIndex) + 1}</td><td>${terms}</td></tr>`);
-                $("#terms").append(terms + '\n\n');
+                // $("#terms").append(terms + '\n\n');
+                $("#terms").val($("#terms").val() + terms + "\n\n");
+                clusterCounter++;
             }
         }
 
-        var first = true;
-        $('#cluster_terms tr').each(function() {
+        $("#numOfClusters").val(clusterCounter);
+
+        let first = true;
+        $('#cluster_terms tr').each(function () {
             if (first) {
                 first = false;
                 return true;
             }
-            this.addEventListener("mouseover", function(){
+            this.addEventListener("mouseover", function () {
                 var cluster_num = this.getElementsByTagName("td")[0].innerText;
 
                 var colors = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac", "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262"];
-                
+
                 var layout = d3.layout.cloud()
                     .size([850, 350])
-                    .words(keyTerms[cluster_num - 1].map(function(d, i) {
-                      return {text: d, size: 10 + Math.random() * 90, color: colors[i]};
+                    .words(keyTerms[cluster_num - 1].map(function (d, i) {
+                        return {text: d, size: 10 + Math.random() * 90, color: colors[i]};
                     }))
                     .padding(5)
-                    .rotate(function() { return ~~(Math.random() * 2) * 90; })
+                    .rotate(function () {
+                        return ~~(Math.random() * 2) * 90;
+                    })
                     .font("Impact")
-                    .fontSize(function(d) { return d.size; })
+                    .fontSize(function (d) {
+                        return d.size;
+                    })
                     .on("end", draw);
 
                 layout.start();
                 $(".popup-overlay, .popup-content").addClass("active");
             });
 
-            this.addEventListener("mouseout", function(){
+            this.addEventListener("mouseout", function () {
                 $(".popup-overlay, .popup-content").removeClass("active");
                 $(".popup-content").empty();
             });
-         });
+        });
     }
 
     function draw(words) {
 
         d3.select(".popup-content").append("svg")
-          .attr("width", 850)
-          .attr("height", 350)
-        .append("g")
-          .attr("transform", "translate(" + 850 / 2 + "," + 350/ 2 + ")")
-        .selectAll("text")
-          .data(words)
-        .enter().append("text")
-          .style("fill", function(d) { return d.color; })
-          .style("font-size", function(d) { return d.size + "px"; })
-          .style("font-family", "Impact")
-          .attr("text-anchor", "middle")
-          .attr("transform", function(d) {
-            return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
-          })
-          .text(function(d) { return d.text; });
-        }
+            .attr("width", 850)
+            .attr("height", 350)
+            .append("g")
+            .attr("transform", "translate(" + 850 / 2 + "," + 350 / 2 + ")")
+            .selectAll("text")
+            .data(words)
+            .enter().append("text")
+            .style("fill", function (d) {
+                return d.color;
+            })
+            .style("font-size", function (d) {
+                return d.size + "px";
+            })
+            .style("font-family", "Impact")
+            .attr("text-anchor", "middle")
+            .attr("transform", function (d) {
+                return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+            })
+            .text(function (d) {
+                return d.text;
+            });
+    }
 
     $.ajax({
         url: "/start",
