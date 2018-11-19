@@ -91,9 +91,10 @@ def set_data_set(dataset_name):
     if dataset_name == "BBC":
         corpus_local = datasets.get_bbc()
     elif dataset_name == "20 News Groups":
-        # TODO replace with code to load news groups
         dataset = fetch_20newsgroups(shuffle=True, remove=('headers', 'footers', 'quotes'))
-        corpus_local = dataset.data
+        corpus = dataset.data
+    elif dataset_name == "All the news":
+        corpus = datasets.get_all_the_news()
 
     vectorized_features_bound = pre_processor.fit_transform(corpus_local)
     global data, terms, corpus
@@ -124,8 +125,8 @@ def index():
 def load():
     user_input_json = request.json
     algorithms = ["iKMeans", "DBSCAN", "birch", "means", "spectral", "affinity"]
-    dataset_names = ["BBC", "20 News Groups"]
-
+    dataset_names = ["BBC", "20 News Groups", "All the news"]
+    
     current_dataset = user_input_json["dataset"]
     if current_dataset == None:
         current_dataset = dataset_names[0]

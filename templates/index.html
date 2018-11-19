@@ -75,6 +75,7 @@
             <select id="dataset-select">
                 <option>BBC</option>
                 <option>20 News Groups</option>
+                <option>All the news</option>
             </select>
             <br/>
             <label for="algorithm-select">Algorithm</label>
@@ -187,6 +188,9 @@
             success: function (data) {
                 render(data);
                 console.log(data);
+            },
+            error: function (data) {
+                alert("It looks like that dataset hasn't been downloaded yet, or there was a problem loading it. Please refer to the README for further instructions.");
             }
         });
     }
