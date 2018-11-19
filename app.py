@@ -112,7 +112,7 @@ def get_algorithm(algorithm_name, clusters):
     elif algorithm_name == 'Affinity Propagation':
         return cluster.AffinityPropagation()
     else:
-        raise NotImplemented(f'algorithm: {algorithm_name} not implemented')
+        raise NotImplementedError(f'algorithm: {algorithm_name} not implemented')
 
 
 @app.route('/')
