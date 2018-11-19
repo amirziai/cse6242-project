@@ -18,16 +18,55 @@
 
     <script src="https://www.highcharts.com/media/com_demo/js/highslide-full.min.js"></script>
     <script src="https://www.highcharts.com/media/com_demo/js/highslide.config.js" charset="utf-8"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.5/d3.layout.cloud.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://www.highcharts.com/media/com_demo/css/highslide.css"/>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/modules/data.js"></script>
     <script src="https://code.highcharts.com/modules/series-label.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
+
+    <style>
+        .popup-overlay{
+          /*Hides pop-up when there is no "active" class*/
+          visibility:hidden;
+          position:absolute;
+          background: #F8F8F8;
+          border: 1px solid #808080;
+          border-radius: 25px;
+          width: 75;
+          height: 50%;
+          top: 13%;
+          left:25%; 
+          z-index: 10;
+        }
+        .popup-overlay.active{
+          /*displays pop-up when "active" class is present*/
+          visibility:visible;
+          text-align:center;
+        }
+
+        .popup-content {
+          /*Hides pop-up content when there is no "active" class */
+         visibility:hidden;
+        }
+
+        .popup-content.active {
+          /*Shows pop-up content when "active" class is present */
+          visibility:visible;
+        }
+    </style>
 </head>
 <body>
 
 <div class="container">
+    <!--Creates the popup body-->
+    <div class="popup-overlay">
+      <!--Creates the popup content-->
+       <div class="popup-content">
+       </div>
+    </div>
     <div class="row">
         <div class="col-sm-3">
             <h2>Options</h2>
@@ -232,10 +271,62 @@
             if (keyTerms.hasOwnProperty(clusterIndex)) {
                 const terms = keyTerms[clusterIndex].slice(0, 10).join(' ');
                 $("#cluster_terms tbody").append(`<tr><td>${parseInt(clusterIndex) + 1}</td><td>${terms}</td></tr>`);
-                $("#terms").append(terms + '\n');
+                $("#terms").append(terms + '\n\n');
             }
         }
+
+        var first = true;
+        $('#cluster_terms tr').each(function() {
+            if (first) {
+                first = false;
+                return true;
+            }
+            this.addEventListener("mouseover", function(){
+                var cluster_num = this.getElementsByTagName("td")[0].innerText;
+
+                var colors = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac", "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262"];
+                
+                var layout = d3.layout.cloud()
+                    .size([850, 350])
+                    .words(keyTerms[cluster_num - 1].map(function(d, i) {
+                      return {text: d, size: 10 + Math.random() * 90, color: colors[i]};
+                    }))
+                    .padding(5)
+                    .rotate(function() { return ~~(Math.random() * 2) * 90; })
+                    .font("Impact")
+                    .fontSize(function(d) { return d.size; })
+                    .on("end", draw);
+
+                layout.start();
+                $(".popup-overlay, .popup-content").addClass("active");
+            });
+
+            this.addEventListener("mouseout", function(){
+                $(".popup-overlay, .popup-content").removeClass("active");
+                $(".popup-content").empty();
+            });
+         });
     }
+
+    function draw(words) {
+
+        d3.select(".popup-content").append("svg")
+          .attr("width", 850)
+          .attr("height", 350)
+        .append("g")
+          .attr("transform", "translate(" + 850 / 2 + "," + 350/ 2 + ")")
+        .selectAll("text")
+          .data(words)
+        .enter().append("text")
+          .style("fill", function(d) { return d.color; })
+          .style("font-size", function(d) { return d.size + "px"; })
+          .style("font-family", "Impact")
+          .attr("text-anchor", "middle")
+          .attr("transform", function(d) {
+            return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+          })
+          .text(function(d) { return d.text; });
+        }
 
     $.ajax({
         url: "/start",
