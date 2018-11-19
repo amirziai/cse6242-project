@@ -87,17 +87,18 @@ def get_pca_for_highcharts(clusters_docs, pca):
 
 
 def set_data_set(dataset_name):
+    global data, terms, corpus
     corpus_local = None
     if dataset_name == "BBC":
         corpus_local = datasets.get_bbc()
     elif dataset_name == "20 News Groups":
         dataset = fetch_20newsgroups(shuffle=True, remove=('headers', 'footers', 'quotes'))
-        corpus = dataset.data
+        corpus_local = dataset.data
     elif dataset_name == "All the news":
-        corpus = datasets.get_all_the_news()
+        corpus_local = datasets.get_all_the_news()
 
     vectorized_features_bound = pre_processor.fit_transform(corpus_local)
-    global data, terms, corpus
+
     data = vectorized_features_bound[:docs_limit].todense()
     terms = np.array(pre_processor.vec.get_feature_names()).reshape((1, max_features))
     corpus = corpus_local
