@@ -6,7 +6,7 @@ import numpy
 import scipy
 from scipy.cluster.vq import vq
 from scipy.spatial.distance import cdist
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, silhouette_samples
 
 import cmeans as Fuzzy
 
@@ -243,7 +243,12 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
         del newclusters
 
     silhouette_avg = silhouette_score(data, IDX, 'cosine')
-
+    sample_silhouette_values = silhouette_samples(data, IDX, 'cosine')
+    scores = dict()
+    for i, label in enumerate(IDX):
+        ith_cluster_silhouette_values = sample_silhouette_values[IDX == label]
+        avg = numpy.mean(ith_cluster_silhouette_values)
+        scores[str(label)] = (avg * 50) + 50
     attrVals = numpy.empty([M, k], dtype=float)
     computeX2(attrVals, clusters, data, N)
     attIDTemp = numpy.argmax(attrVals, axis=1)
@@ -326,4 +331,4 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
 
     clusterKeyterms = [ast.literal_eval(x) for x in clusterKeyterms]
     # clusterDocs = [ast.literal_eval(x) for x in clusterDocs]
-    return clusterDocs, clusterKeyterms, keyterms, silhouette_avg
+    return clusterDocs, clusterKeyterms, keyterms, silhouette_avg, scores
