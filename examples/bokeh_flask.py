@@ -11,7 +11,7 @@ import preprocessing
 
 app = Flask(__name__)
 
-datasets.DATASETS_PATH = "../" + datasets.DATASETS_PATH
+datasets.DATASET_PATH = "../" + datasets.DATASET_PATH
 all_documents = datasets.get_bbc()
 
 document_set = [all_documents[0:500], all_documents[500:1000], all_documents[1000:1500], all_documents[1500:2000]]

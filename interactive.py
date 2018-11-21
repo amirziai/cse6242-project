@@ -1,5 +1,4 @@
 import ast
-import csv
 import math
 
 import numpy
@@ -11,54 +10,7 @@ from sklearn.metrics import silhouette_score
 import cmeans as Fuzzy
 
 
-###########################importCSV###################################
-def importDatafile(fileName, data):
-    with open(fileName, 'rb') as myCsvFile:
-        rows = csv.reader(myCsvFile, delimiter=',')
-        rowNum = -1;
-        for row in rows:
-            rowNum += 1
-            colNum = -1
-            for value in row:
-                colNum += 1
-                data[rowNum, colNum] = float(value)
-    myCsvFile.close()
-    return
-
-
-def importTermfile(fileName, terms):
-    with open(fileName, 'rb') as myCsvFile:
-        rows = csv.reader(myCsvFile, delimiter=',')
-        rowNum = -1;
-        for row in rows:
-            rowNum += 1
-            for value in row:
-                # print rowNum, value, "\n"
-                terms[0, rowNum] = value
-
-    myCsvFile.close()
-    return
-
-
-def importSpecfile(fileName):
-    with open(fileName, 'rb') as myCsvFile:
-
-        rows = csv.reader(myCsvFile, delimiter=',')
-        rowNum = 0;
-        for row in rows:
-            rowNum += 1
-            for value in row:
-                if (rowNum == 1):
-                    N = eval(value)
-                if (rowNum == 2):
-                    M = eval(value)
-            # print rowNum, value, "\n"
-            # terms[0, rowNum] = value
-    myCsvFile.close()
-    return N, M
-
-
-############################Confucion matrix###########################################
+# confusion matrix
 def computeX2(attrVals, clusters, data, N):
     M, k = attrVals.shape
     for j in range(M):
@@ -95,35 +47,7 @@ def computeX2(attrVals, clusters, data, N):
     return
 
 
-############################Confucion matrix end###########################################
-
-# cgitb.enable()
-# form = cgi.FieldStorage()
-# userDirectory = form.getvalue('userDirectory')
-# fileName = form.getvalue('fileName')
-# specName = form.getvalue('specFileName')
-# termName = form.getvalue('termsFileName')
-# fileListName = form.getvalue('fileListName')
-# mmFileName = userDirectory + "docClusters.mm"
-# k = eval(form.getvalue('clusterNumber'))
-# userU = eval(form.getvalue('userU'))
-
 f = 50  # # number of key terms for each cluster that will return to the user
-
-
-# N = -1;  # eval(form.getvalue('NumofDocs'))
-# M = -1;  # eval(form.getvalue('NumofTerms'))
-# N, M = importSpecfile(specName)
-#
-# data = numpy.empty([N, M], dtype=float)  # document-term matrix=data
-# importDatafile(fileName, data)
-#
-# terms = numpy.empty([1, M], dtype=object)  # list of terms
-# importTermfile(termName, terms)
-#
-# docs = numpy.empty([1, N], dtype=object)  # list of doc names
-# importTermfile(fileListName, docs)
-# clusterNames = []
 
 
 def icluster(data, terms, userFeedbackTerm, k, userU=-1):
@@ -147,11 +71,7 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
     docs = numpy.arange(1, N + 1).reshape((1, N))
 
     Vars = numpy.var(data, axis=0).transpose()
-    # print(Vars.shape)
     options = (1.1, 25, 0.01, 0)
-    results = []
-    Fval = []
-    NMI = []
     keyterms = []
     clusterKeyterms = []
     clusterDocs = []
@@ -211,28 +131,6 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
         for p in range(k):
             clusters.append(numpy.where(tempY[:, p])[0])
 
-        minY = numpy.min(Y)
-        maxY = numpy.max(Y)
-        tempY = 1 - numpy.multiply((Y - minY), numpy.power(maxY - minY, -1.0))
-
-        # outputDocMembs = userDirectory + "documentMembers"
-        # fo = open(outputDocMembs, "wb")
-        # fo.write("name")
-        # for p in range(k):
-        #     if len(clusterNames) > 0:
-        #         fo.write("," + clusterNames[p])
-        #     else:
-        #         fo.write(",cluster" + str(p))
-        # fo.write("\n")
-        # for i in range(N):
-        #     textFile = docs[0, i]
-        #     textFile = textFile[0:textFile.rindex('.')]
-        #     fo.write(textFile + '.txt')
-        #     for p in range(k):
-        #         fo.write("," + str(tempY[i, p] * 100))
-        #     fo.write("\n")
-        # fo.close()
-
         realK = 0
         IDX = numpy.argmin(Y, axis=1)
         newclusters = []
@@ -246,34 +144,10 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
 
     attrVals = numpy.empty([M, k], dtype=float)
     computeX2(attrVals, clusters, data, N)
-    attIDTemp = numpy.argmax(attrVals, axis=1)
-    id = []
-    idp = []
     for p in range(k):
         temp = numpy.argsort(attrVals[:, p])
         temp = temp[::-1]
         keyterms.append(temp[range(f)])
-
-    minV = numpy.min(attrVals)
-    maxV = numpy.max(attrVals)
-    attrVals = numpy.multiply((attrVals - minV), numpy.power(maxV - minV, -1.0))
-
-    # outputTermMembs = userDirectory + "termMembers"
-    # fo = open(outputTermMembs, "wb")
-    # fo.write("name")
-    # for p in range(k):
-    #     if len(clusterNames) > 0:
-    #         fo.write("," + clusterNames[p])
-    #     else:
-    #         fo.write(",cluster" + str(p))
-    # fo.write("\n")
-    # for i in range(M):
-    #     term = terms[0, i]
-    #     fo.write(term)
-    #     for p in range(k):
-    #         fo.write("," + str(attrVals[i, p] * 100))
-    #     fo.write("\n")
-    # fo.close()
 
     for p in range(k):
         tempStr = '['
@@ -285,45 +159,12 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
         clusterKeyterms.append(tempStr)
 
     for p in range(k):
-        # fo2.write("<node FOLDED=\"true\" TEXT=\"" + terms[0, keyterms[p][0]] + "-" + terms[0, keyterms[p][1]] + "\">\n")
-        # tempStr = '['
-        # comma = ''
-        # fo2.write("<richcontent TYPE=\"NOTE\">\n")
-        # fo2.write("<html>\n<head></head>\n<body>\n<p>")
-        # fo2.write("Cluster size: " + str(len(clusters[p])))
-        # fo2.write("</p>\n</body>\n</html>\n</richcontent>\n")
         tmp = []
 
         for j in range(len(clusters[p])):
-            textFile = docs[0, clusters[p][j]]
-            # fo2.write("<node LINK=\"" + "http://ares.research.cs.dal.ca/~sherkat/IC2/" + userDirectory[
-            #                                                                             2:len(userDirectory)] + textFile[
-            #                                                                                                     0:textFile.rindex(
-            #                                                                                                         '.')] + '.pdf' + "\" TEXT=\"" + textFile + "\">\n")
-            # tempStr += comma + '\"' + str(docs[0, clusters[p][j]]) + '\"'
             tmp.append(docs[0, clusters[p][j]])
-        # fo.write(comma + docs[0, clusters[p][j]])
-        # comma = ','
-        # try:
-        #
-        #     with open(userDirectory + docs[0, clusters[p][j]]) as textFile:
-        #         first_line = textFile.readline()
-        #         fo2.write("<richcontent TYPE=\"NOTE\">\n")
-        #         fo2.write("<html>\n<head></head>\n<body>\n<p>")
-        #         fo2.write(first_line[0:min(f, len(first_line))])
-        #         fo2.write("</p>\n</body>\n</html>\n</richcontent>\n")
-        #     textFile.close()
-        # except:
-        #     fo2.write("<richcontent TYPE=\"NOTE\">\n")
-        #     fo2.write("<html>\n<head></head>\n<body>\n<p>")
-        #     fo2.write("</p>\n</body>\n</html>\n</richcontent>\n")
 
-        # fo2.write("</node>\n")
-        # fo.write("\n")
-        # tempStr += ']'
         clusterDocs.append(tmp)
-        # fo2.write("</node>")
 
     clusterKeyterms = [ast.literal_eval(x) for x in clusterKeyterms]
-    # clusterDocs = [ast.literal_eval(x) for x in clusterDocs]
     return clusterDocs, clusterKeyterms, keyterms, silhouette_avg
