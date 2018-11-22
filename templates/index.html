@@ -52,6 +52,16 @@
             /*Shows pop-up content when "active" class is present */
             visibility: visible;
         }
+
+        .bar-border {
+            border-color: grey;
+            border-style: solid;
+            border-width: 1px;
+        }
+
+        .bar-fill {
+            background-color: grey;
+        }
     </style>
 </head>
 <body>
@@ -98,7 +108,7 @@
             <table id="cluster_terms" class="table table-striped table-sm table-hover">
                 <thead class="thead-dark">
                 <th style="width: 8%;">Cluster</th>
-                <th style="width: 6%;">Score</th>
+                <th style="width: 15%;">Score (0-100)</th>
                 <th>Terms</th>
                 </thead>
                 <tbody></tbody>
@@ -275,7 +285,7 @@
                 const terms = keyTerms[clusterIndex].slice(0, 10).join(' ');
                 const score = data["scores"][clusterIndex].toFixed(2);
                 displayIndex = parseInt(clusterIndex) + 1;
-                $("#cluster_terms tbody").append(`<tr><td>${displayIndex}</td><td>${score}</td><td>${terms}</td></tr>`);
+                $("#cluster_terms tbody").append(`<tr><td>${displayIndex}</td><td class="score">${score}</td><td>${terms}</td></tr>`);
                 // $("#terms").append(terms + '\n\n');
                 $("#terms").val($("#terms").val() + terms + "\n\n");
                 clusterCounter++;
@@ -319,6 +329,10 @@
                 $(".popup-content").empty();
             });
         });
+
+        $('#cluster_terms .score').each(function() {
+            this.innerHTML = this.innerHTML + '<div class="bar-border"><div class="bar-fill" style="height:24px;width:' + parseFloat(this.innerText) + '%"></div></div>';
+        })
     }
 
     function draw(words) {
