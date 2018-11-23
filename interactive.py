@@ -248,7 +248,7 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
     for i, label in enumerate(IDX):
         ith_cluster_silhouette_values = sample_silhouette_values[IDX == label]
         avg = numpy.mean(ith_cluster_silhouette_values)
-        scores[str(label)] = (avg * 50) + 50
+        scores[str(label)] = 50 + (50 / (pow(10, (1.0 / 3)))) * pow(10.0 * avg, (1.0 / 3))
     attrVals = numpy.empty([M, k], dtype=float)
     computeX2(attrVals, clusters, data, N)
     attIDTemp = numpy.argmax(attrVals, axis=1)

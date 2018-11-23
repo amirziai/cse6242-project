@@ -168,7 +168,7 @@ def load():
         clusters_dict[label].append(i + 1)
         ith_cluster_silhouette_values = sample_silhouette_values[y_pred == label]
         avg = np.mean(ith_cluster_silhouette_values)
-        scores[str(label)] = (avg * 50) + 50
+        scores[str(label)] = 50 + (50 / (pow(10, (1.0 / 3)))) * pow(10.0 * avg, (1.0 / 3))
     clusters_docs = [clusters_dict[i] for i in range(len(clusters_dict))]
 
     # print(f'# of docs in each cluster: {list(map(len, clusters_docs))}')
