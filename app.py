@@ -9,6 +9,7 @@ from sklearn import cluster
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.decomposition import PCA, IncrementalPCA
 from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
+from sklearn.metrics import silhouette_score, silhouette_samples
 from sklearn.preprocessing import StandardScaler
 
 import datasets
@@ -22,7 +23,7 @@ app = Flask(__name__)
 k = 5  # start with assuming there are this many clusters
 # options = (1.1, 25, 0.01, 0)
 max_features = 1000
-docs_limit = 500
+docs_limit = 10000
 n_samples = 2000
 
 # cosmetic
@@ -156,12 +157,18 @@ def load():
     else:
         y_pred = algorithm.predict(data)
     # print(f'y_pred size: {len(y_pred)}')
-    silhouette_avg = None
+    silhouette_avg = (50 * silhouette_score(data, y_pred, 'cosine')) + 50
+    print(silhouette_avg)
+    sample_silhouette_values = silhouette_samples(data, y_pred, 'cosine')
     # clusters_dict = dict()
 
     clusters_dict = defaultdict(list)
+    scores = dict()
     for i, label in enumerate(y_pred):
         clusters_dict[label].append(i + 1)
+        ith_cluster_silhouette_values = sample_silhouette_values[y_pred == label]
+        avg = np.mean(ith_cluster_silhouette_values)
+        scores[str(label)] = 50 + (50 / (pow(10, (1.0 / 3)))) * pow(10.0 * avg, (1.0 / 3))
     clusters_docs = [clusters_dict[i] for i in range(len(clusters_dict))]
 
     # print(f'# of docs in each cluster: {list(map(len, clusters_docs))}')
@@ -189,7 +196,7 @@ def load():
     # for key in clusters_dict.keys():
     #     clusters_docs[key] = clusters_dict[key]
 
-    return send_data(cluster_key_terms, silhouette_avg, clusters_docs, pca)
+    return send_data(cluster_key_terms, silhouette_avg, scores, clusters_docs, pca)
 
 
 @app.route('/update', methods=['POST'])
@@ -207,28 +214,27 @@ def update():
     return get_clusters(no_clusters, user_input)
 
 
-def send_data(cluster_key_terms, silhouette_avg, clusters_docs, pca):
+def send_data(cluster_key_terms, silhouette_avg, scores, clusters_docs, pca):
     return jsonify({
         'cluster_key_terms': cluster_key_terms,
         # 'key_terms': key_terms,
         'silhouette': silhouette_avg,
         'pca': get_pca_for_highcharts(clusters_docs, pca),
+        'scores': scores
     })
 
 
 def get_clusters(no_clusters, user_input):
     user_feedback = -1 if len(user_input) == 0 else +1
-    clusters_docs, cluster_key_terms, key_terms, silhouette_avg = interactive.icluster(data, terms, user_input,
+    clusters_docs, cluster_key_terms, key_terms, silhouette_avg, scores = interactive.icluster(data, terms, user_input,
                                                                                        no_clusters, user_feedback)
     pca = PCA(n_components=2).fit_transform(data)
     # key_terms = [list(x) for x in key_terms]
-    return send_data(cluster_key_terms, silhouette_avg, clusters_docs, pca)
-
+    return send_data(cluster_key_terms, silhouette_avg, scores, clusters_docs, pca)
 
 @app.route('/start')
 def start():
     return get_clusters(k, [])
-
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
