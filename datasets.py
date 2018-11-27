@@ -8,9 +8,9 @@ DATASET_PATH = 'resources/datasets/'
 MAX_DOCS = 2000
 
 
-def get_bbc(docs=MAX_DOCS) -> List[str]:
+def get_bbc(num_docs=MAX_DOCS) -> List[str]:
     docs = [line[1] for i, line in enumerate(csv.reader(open(f"{DATASET_PATH}bbc-text.csv"), delimiter=',')) if i > 0]
-    return docs[:MAX_DOCS]
+    return docs[:num_docs]
 
 
 # articles1.csv from https://www.kaggle.com/snapcrack/all-the-news#articles1.csv.
