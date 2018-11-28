@@ -88,6 +88,9 @@
             <label for="numOfClusters">Number of Clusters</label>
             <input class="form-control" id="numOfClusters" placeholder="5">
             <br>
+            <label for="percentage">Percentage of Dataset to Include</label>
+            <input class="form-control" id="percentage" placeholder="1">
+            <br>
             <button type="submit" class="btn btn-primary" onclick="submit_options()">Cluster</button>
             <!--Creates the popup body-->
             <div class="popup-overlay">
@@ -192,7 +195,8 @@
             data: JSON.stringify({
                 algorithm: $("#algorithm-select").val(),
                 dataset: $("#dataset-select").val(),
-                numOfClusters: $("#numOfClusters").val()
+                numOfClusters: $("#numOfClusters").val(),
+                percentage: $("#percentage").val()
             }),
             contentType: 'application/json;charset=UTF-8',
             success: function (data) {
