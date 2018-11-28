@@ -213,18 +213,6 @@ def update():
     no_clusters = len(user_input)
     return get_clusters(no_clusters, user_input)
 
-def scale_score(avg):
-    negative = False
-    if avg < 0:
-        negative = True
-        avg *= -1
-    score = (50 / (pow(10, (1.0 / 3)))) * pow(10.0 * avg, (1.0 / 3))
-    if negative:
-        score = 50 - score
-    else:
-        score = 50 + score
-    return score
-
 def send_data(cluster_key_terms, silhouette_avg, scores, clusters_docs, pca):
     return jsonify({
         'cluster_key_terms': cluster_key_terms,
