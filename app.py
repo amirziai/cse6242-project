@@ -47,8 +47,7 @@ corpus = datasets.get_bbc()
 pre_processor = preprocessing.NLPProcessor(max_features=max_features)
 bbc_vectorized_features_bound = pre_processor.fit_transform(corpus)
 # calculate percentage to include
-slice_value = int((float(1) / float(100)) * bbc_vectorized_features_bound.shape[0])
-data = bbc_vectorized_features_bound[:slice_value].todense()
+data = bbc_vectorized_features_bound[:docs_limit].todense()
 terms = np.array(pre_processor.vec.get_feature_names()).reshape((1, max_features))
 
 # cosmetic
@@ -89,7 +88,7 @@ def get_pca_for_highcharts(clusters_docs, pca):
     ]
 
 
-def set_data_set(dataset_name, percentage):
+def set_data_set(dataset_name):
     global data, terms, corpus
     corpus_local = None
     if dataset_name == "BBC":
@@ -103,8 +102,7 @@ def set_data_set(dataset_name, percentage):
     vectorized_features_bound = pre_processor.fit_transform(corpus_local)
 
     # calculate percentage to include
-    slice_value = int((float(percentage) / float(100)) * vectorized_features_bound.shape[0])
-    data = vectorized_features_bound[:slice_value].todense()
+    data = vectorized_features_bound[:docs_limit].todense()
     terms = np.array(pre_processor.vec.get_feature_names()).reshape((1, max_features))
     corpus = corpus_local
 
@@ -133,11 +131,13 @@ def load():
     algorithms = ["iKMeans", "DBSCAN", "birch", "means", "spectral", "affinity"]
     dataset_names = ["BBC", "20 News Groups", "All the news"]
     
-    percentage = user_input_json["percentage"]
+    user_docs_limit = user_input_json["docsLimit"]
+    if user_docs_limit is not "" and user_docs_limit is not None:
+        docs_limit = int(user_docs_limit)
     current_dataset = user_input_json["dataset"]
     if current_dataset == None:
         current_dataset = dataset_names[0]
-    set_data_set(current_dataset, percentage)
+    set_data_set(current_dataset)
 
     clusters = user_input_json["numOfClusters"]
     if clusters == "" or clusters == None:

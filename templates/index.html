@@ -88,8 +88,8 @@
             <label for="numOfClusters">Number of Clusters</label>
             <input class="form-control" id="numOfClusters" placeholder="5">
             <br>
-            <label for="percentage">Percentage of Dataset to Include</label>
-            <input class="form-control" id="percentage" placeholder="1">
+            <label for="docsLimit">Maximum Documents to Include</label>
+            <input class="form-control" id="docsLimit" placeholder="10000">
             <br>
             <button type="submit" class="btn btn-primary" onclick="submit_options()">Cluster</button>
             <!--Creates the popup body-->
@@ -196,7 +196,7 @@
                 algorithm: $("#algorithm-select").val(),
                 dataset: $("#dataset-select").val(),
                 numOfClusters: $("#numOfClusters").val(),
-                percentage: $("#percentage").val()
+                docsLimit: $("#docsLimit").val()
             }),
             contentType: 'application/json;charset=UTF-8',
             success: function (data) {
