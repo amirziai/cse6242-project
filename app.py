@@ -23,7 +23,6 @@ app = Flask(__name__)
 k = 5  # start with assuming there are this many clusters
 max_features = 1000
 docs_limit = 5000
-n_samples = 2000
 default_percentage = 0.1
 
 # cosmetic
