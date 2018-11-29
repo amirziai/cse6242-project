@@ -9,7 +9,6 @@ from sklearn.metrics import silhouette_score, silhouette_samples
 
 import cmeans as Fuzzy
 
-
 # confusion matrix
 def computeX2(attrVals, clusters, data, N):
     M, k = attrVals.shape
@@ -146,7 +145,7 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
     for i, label in enumerate(IDX):
         ith_cluster_silhouette_values = sample_silhouette_values[IDX == label]
         avg = numpy.mean(ith_cluster_silhouette_values)
-        scores[str(label)] = 50 + (50 / (pow(10, (1.0 / 3)))) * pow(10.0 * avg, (1.0 / 3))
+        scores[str(label)] = scale_score(avg)
     attrVals = numpy.empty([M, k], dtype=float)
     computeX2(attrVals, clusters, data, N)
     for p in range(k):
@@ -175,3 +174,15 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
     
     # clusterDocs = [ast.literal_eval(x) for x in clusterDocs]
     return clusterDocs, clusterKeyterms, keyterms, silhouette_avg, scores
+
+def scale_score(avg):
+    negative = False
+    if avg < 0:
+        negative = True
+        avg *= -1
+    score = (50 / (pow(10, (1.0 / 3)))) * pow(10.0 * avg, (1.0 / 3))
+    if negative:
+        score = 50 - score
+    else:
+        score = 50 + score
+    return score
