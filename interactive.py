@@ -1,3 +1,4 @@
+# adapted from https://github.com/ehsansherkat/IDC
 import ast
 import math
 
@@ -8,6 +9,7 @@ from scipy.spatial.distance import cdist
 from sklearn.metrics import silhouette_score, silhouette_samples
 
 import cmeans as Fuzzy
+
 
 # confusion matrix
 def computeX2(attrVals, clusters, data, N):
@@ -76,8 +78,8 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
     clusterDocs = []
 
     realK = 0
-    while (
-            realK < k):  # in case the number of clusters are less than user specified, it will recluster until it gets the appropriate number.
+    # in case the number of clusters are less than user specified, it will recluster until it gets the right number.
+    while realK < k:
         idp = []
         selectedCentroids = numpy.empty([k, M], dtype=float)
         fcm = Fuzzy.FuzzyCMeans(data.transpose(), k, options[0], 'cosine', userU, options[1], options[2])
@@ -171,9 +173,10 @@ def icluster(data, terms, userFeedbackTerm, k, userU=-1):
         clusterDocs.append(tmp)
 
     clusterKeyterms = [ast.literal_eval(x) for x in clusterKeyterms]
-    
+
     # clusterDocs = [ast.literal_eval(x) for x in clusterDocs]
     return clusterDocs, clusterKeyterms, keyterms, silhouette_avg, scores
+
 
 def scale_score(avg):
     negative = False

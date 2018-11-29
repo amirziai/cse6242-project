@@ -21,10 +21,10 @@ app = Flask(__name__)
 # configs
 # algo
 k = 5  # start with assuming there are this many clusters
-# options = (1.1, 25, 0.01, 0)
 max_features = 1000
 docs_limit = 5000
 n_samples = 2000
+default_percentage = 0.1
 
 # cosmetic
 color_alpha = 0.5
@@ -42,12 +42,18 @@ colors_base = [
 ]
 text_top_n_chars = 500
 
+
+# util
+def _get_number_of_docs(rows: int, pct: float) -> int:
+    n = int(rows * pct)
+    return max(1, min(rows, n))
+
+
 # algo
 corpus = datasets.get_bbc()
 pre_processor = preprocessing.NLPProcessor(max_features=max_features)
 bbc_vectorized_features_bound = pre_processor.fit_transform(corpus)
-# calculate percentage to include
-slice_value = int((float(1) / float(100)) * bbc_vectorized_features_bound.shape[0])
+slice_value = _get_number_of_docs(bbc_vectorized_features_bound.shape[0], default_percentage)
 data = bbc_vectorized_features_bound[:slice_value].todense()
 terms = np.array(pre_processor.vec.get_feature_names()).reshape((1, max_features))
 
@@ -58,18 +64,6 @@ colors = [x.format(alpha=color_alpha) for x in colors_base]
 regex = re.compile('[^a-zA-Z\s]')
 stop_words_ad_hoc = {'said'}
 stop_words = set(ENGLISH_STOP_WORDS).union(stop_words_ad_hoc)
-
-
-# def get_assignments(cluster_docs):
-#     assignments = np.zeros(docs)
-#
-#     for c in range(len(cluster_docs)):
-#         for d in range(len(cluster_docs[c])):
-#             i = cluster_docs[c][d]
-#             if i < docs:
-#                 assignments[i] = c
-#
-#     return list(assignments)
 
 
 def get_pca_for_highcharts(clusters_docs, pca):
@@ -89,7 +83,7 @@ def get_pca_for_highcharts(clusters_docs, pca):
     ]
 
 
-def set_data_set(dataset_name, percentage):
+def set_data_set(dataset_name: str, percentage: float) -> None:
     global data, terms, corpus
     corpus_local = None
     if dataset_name == "BBC":
@@ -103,15 +97,13 @@ def set_data_set(dataset_name, percentage):
     vectorized_features_bound = pre_processor.fit_transform(corpus_local)
 
     # calculate percentage to include
-    slice_value = int((float(percentage) / float(100)) * vectorized_features_bound.shape[0])
-    data = vectorized_features_bound[:slice_value].todense()
+    n = _get_number_of_docs(vectorized_features_bound.shape[0], percentage)
+    data = vectorized_features_bound[:n].todense()
     terms = np.array(pre_processor.vec.get_feature_names()).reshape((1, max_features))
     corpus = corpus_local
 
 
-def get_algorithm(algorithm_name, clusters):
-    # if algorithm_name == "DBSCAN":
-    #    return cluster.DBSCAN()
+def get_algorithm(algorithm_name: str, clusters: int) -> cluster:
     if algorithm_name == "Birch":
         return cluster.Birch(n_clusters=clusters)
     elif algorithm_name == "Spectral Clustering":
@@ -132,15 +124,15 @@ def load():
     user_input_json = request.json
     algorithms = ["iKMeans", "DBSCAN", "birch", "means", "spectral", "affinity"]
     dataset_names = ["BBC", "20 News Groups", "All the news"]
-    
+
     percentage = user_input_json["percentage"]
     current_dataset = user_input_json["dataset"]
-    if current_dataset == None:
+    if current_dataset is None:
         current_dataset = dataset_names[0]
     set_data_set(current_dataset, percentage)
 
     clusters = user_input_json["numOfClusters"]
-    if clusters == "" or clusters == None:
+    if clusters == "" or clusters is None:
         clusters = 5
     else:
         clusters = int(clusters)
@@ -161,11 +153,9 @@ def load():
         y_pred = algorithm.labels_.astype(np.int)
     else:
         y_pred = algorithm.predict(data)
-    # print(f'y_pred size: {len(y_pred)}')
     silhouette_avg = (50 * silhouette_score(data, y_pred, 'cosine')) + 50
     print(silhouette_avg)
     sample_silhouette_values = silhouette_samples(data, y_pred, 'cosine')
-    # clusters_dict = dict()
 
     clusters_dict = defaultdict(list)
     scores = dict()
@@ -173,7 +163,7 @@ def load():
         clusters_dict[label].append(i + 1)
         ith_cluster_silhouette_values = sample_silhouette_values[y_pred == label]
         avg = np.mean(ith_cluster_silhouette_values)
-        scores[str(label)] = scale_score(avg)
+        scores[str(label)] = interactive.scale_score(avg)
     clusters_docs = [clusters_dict[i] for i in range(len(clusters_dict))]
 
     # print(f'# of docs in each cluster: {list(map(len, clusters_docs))}')
@@ -188,20 +178,31 @@ def load():
         for c in clusters_docs
     ]
 
-    # clusters_docs = [[] for _ in range(10)]
-    # a[0].append(1)
-    # a
-    #
-    # for i in range(len(y_pred)):
-    #     cluster_id = int(y_pred[i])
-    #     if not cluster_id in clusters_dict.keys():
-    #         clusters_dict[cluster_id] = list()
-    #     clusters_dict[cluster_id].append(i + 1)
-    # clusters_docs = [None] * len(clusters_dict.keys())
-    # for key in clusters_dict.keys():
-    #     clusters_docs[key] = clusters_dict[key]
-
     return send_data(cluster_key_terms, silhouette_avg, scores, clusters_docs, pca)
+
+
+def send_data(cluster_key_terms, silhouette_avg, scores, clusters_docs, pca):
+    return jsonify({
+        'cluster_key_terms': cluster_key_terms,
+        # 'key_terms': key_terms,
+        'silhouette': silhouette_avg,
+        'pca': get_pca_for_highcharts(clusters_docs, pca),
+        'scores': scores
+    })
+
+
+def get_clusters(no_clusters, user_input):
+    user_feedback = -1 if len(user_input) == 0 else +1
+    clusters_docs, cluster_key_terms, key_terms, silhouette_avg, scores = interactive.icluster(data, terms, user_input,
+                                                                                               no_clusters,
+                                                                                               user_feedback)
+    pca = PCA(n_components=2).fit_transform(data)
+    return send_data(cluster_key_terms, silhouette_avg, scores, clusters_docs, pca)
+
+
+@app.route('/start')
+def start():
+    return get_clusters(k, [])
 
 
 @app.route('/update', methods=['POST'])
@@ -218,27 +219,6 @@ def update():
     no_clusters = len(user_input)
     return get_clusters(no_clusters, user_input)
 
-def send_data(cluster_key_terms, silhouette_avg, scores, clusters_docs, pca):
-    return jsonify({
-        'cluster_key_terms': cluster_key_terms,
-        # 'key_terms': key_terms,
-        'silhouette': silhouette_avg,
-        'pca': get_pca_for_highcharts(clusters_docs, pca),
-        'scores': scores
-    })
-
-
-def get_clusters(no_clusters, user_input):
-    user_feedback = -1 if len(user_input) == 0 else +1
-    clusters_docs, cluster_key_terms, key_terms, silhouette_avg, scores = interactive.icluster(data, terms, user_input,
-                                                                                       no_clusters, user_feedback)
-    pca = PCA(n_components=2).fit_transform(data)
-    # key_terms = [list(x) for x in key_terms]
-    return send_data(cluster_key_terms, silhouette_avg, scores, clusters_docs, pca)
-
-@app.route('/start')
-def start():
-    return get_clusters(k, [])
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
