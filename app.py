@@ -23,7 +23,7 @@ app = Flask(__name__)
 k = 5  # start with assuming there are this many clusters
 # options = (1.1, 25, 0.01, 0)
 max_features = 1000
-docs_limit = 10000
+docs_limit = 5000
 n_samples = 2000
 
 # cosmetic
@@ -173,7 +173,7 @@ def load():
         clusters_dict[label].append(i + 1)
         ith_cluster_silhouette_values = sample_silhouette_values[y_pred == label]
         avg = np.mean(ith_cluster_silhouette_values)
-        scores[str(label)] = 50 + (50 / (pow(10, (1.0 / 3)))) * pow(10.0 * avg, (1.0 / 3))
+        scores[str(label)] = scale_score(avg)
     clusters_docs = [clusters_dict[i] for i in range(len(clusters_dict))]
 
     # print(f'# of docs in each cluster: {list(map(len, clusters_docs))}')
@@ -217,7 +217,6 @@ def update():
 
     no_clusters = len(user_input)
     return get_clusters(no_clusters, user_input)
-
 
 def send_data(cluster_key_terms, silhouette_avg, scores, clusters_docs, pca):
     return jsonify({
