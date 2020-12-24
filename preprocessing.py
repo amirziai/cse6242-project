@@ -8,7 +8,7 @@ class NLPProcessor:
     def __init__(self,
                  vectorizer: str='tf-idf',
                  ngram_range: Tuple[int]=(1, 1),
-                 stop_words: str=None,
+                 stop_words: str='english',
                  max_features: int=None
                  ) -> None:
         """
@@ -34,3 +34,5 @@ class NLPProcessor:
         :return: sparse scipy csr_matrix
         """
         return self.vec.fit_transform(corpus)
+
+        

@@ -2,11 +2,21 @@ from typing import List, Tuple
 
 from sklearn.metrics import adjusted_rand_score, adjusted_mutual_info_score, homogeneity_completeness_v_measure, \
     silhouette_score
+	
+import numpy as np
+import pandas as pd
+import re, gensim
+from gensim import corpora
+from nltk.corpus import stopwords
+from sklearn.metrics.pairwise import cosine_similarity as cs
+from sklearn.feature_extraction.text import CountVectorizer
+
 
 
 # references
 # https://datascienceplus.com/evaluation-of-topic-modeling-topic-coherence/
 # http://scikit-learn.org/stable/modules/clustering.html#clustering-performance-evaluation
+# https://www.kaggle.com/hengqujushi/cosine-similarity-nlp
 
 class GroundTruthMetrics:
     def __init__(self, labels: List[int], preds: List[int]) -> None:
@@ -50,3 +60,12 @@ class NoGroundTruthMetrics:
         :return: score
         """
         return silhouette_score(self.x, self.labels, metric)
+		
+class DocumentSimilarity:
+    ##get cosine similarity
+    def get_cosine_similarity(cos1, cos2):
+        cosine_sim = []
+        for i,j in zip(cos1,cos2):
+            sim = cs(i,j)
+            cosine_sim.append(sim[0][0])
+        return cosine_sim

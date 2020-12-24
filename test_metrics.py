@@ -2,6 +2,10 @@ import unittest
 
 import metrics
 import numpy as np
+import pandas as pd
+
+import preprocessing
+
 
 
 class UnitTests(unittest.TestCase):
@@ -20,6 +24,21 @@ class UnitTests(unittest.TestCase):
         ])
         m = metrics.NoGroundTruthMetrics(x, [1, 1, 2, 2])
         self.assertEqual(m.silhouette_score(), 1)
+
+    def test_similarity_metrocs(self):
+        corpus = ["The dog ran over the cat","the movie is about a dog","the book was made into a movie","this is fun","The dog and the cat are over"]
+        # ["The dog ran over the cat","the movie is about a dog","the book was made into a movie","this is fun","The dog and the cat are over"]
+        # ['this is', 'it is']
+        vec = preprocessing.NLPProcessor()
+        out = vec.fit_transform(corpus)
+
+        cosine_sim_matrix = pd.DataFrame(0., index=range(len(corpus)), columns=range(len(corpus)))
+
+        for i in range(0,len(corpus)):
+            for j in range(0,len(corpus)):
+                cosine_sim_matrix.at[i, j] = metrics.DocumentSimilarity.get_cosine_similarity(out[i], out[j])[0]
+
+        print(cosine_sim_matrix)
 
 
 if __name__ == '__main__':
